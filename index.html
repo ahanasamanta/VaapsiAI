@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>VaapsiAI — Seller Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:        #F7F4EE;
+      --bg2:       #F0EDE5;
+      --white:     #FDFCF8;
+      --border:    #E2DDD4;
+      --border2:   #CCC7BB;
+      --text:      #1C1A16;
+      --muted:     #7A7568;
+      --light:     #EAE6DC;
+      --accent:    #3D6B52;
+      --accent2:   #5BA07A;
+      --accent-bg: #E8F2EC;
+      --amber:     #C47B0E;
+      --amber-bg:  #FEF3DC;
+      --red:       #B83535;
+      --red-bg:    #FAEAEA;
+      --blue:      #1E6A9E;
+      --blue-bg:   #E6F1FA;
+      --purple:    #6040B8;
+      --purple-bg: #EEE8FA;
+      --font-head: 'Fraunces', Georgia, serif;
+      --font-body: 'DM Sans', sans-serif;
+      --radius:    12px;
+      --shadow:    0 1px 3px rgba(0,0,0,0.06), 0 4px 14px rgba(0,0,0,0.05);
+      --sidebar-w: 228px;
+    }
+    body { background: var(--bg); color: var(--text); font-family: var(--font-body); min-height: 100vh; display: flex; }
+
+    /* LOGIN */
+    #login-screen { position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:999; }
+    .login-box { background:var(--white);border:1px solid var(--border);border-radius:18px;padding:44px 40px;width:380px;box-shadow:0 8px 40px rgba(0,0,0,0.08); }
+    .login-logo { font-family:var(--font-head);font-size:26px;font-weight:700;color:var(--accent);margin-bottom:4px; }
+    .login-tag  { font-size:12.5px;color:var(--muted);margin-bottom:32px; }
+    .login-lbl  { font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:5px;display:block; }
+    .login-inp  { width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:11px 13px;font-size:14px;font-family:var(--font-body);color:var(--text);outline:none;margin-bottom:14px;transition:border-color .15s; }
+    .login-inp:focus { border-color:var(--accent);background:var(--white); }
+    .login-btn  { width:100%;padding:13px;background:var(--accent);color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;font-family:var(--font-body);cursor:pointer;transition:background .15s; }
+    .login-btn:hover { background:#2f5540; }
+    .login-err  { font-size:12px;color:var(--red);margin-top:10px;display:none; }
+    .login-hint { font-size:11.5px;color:var(--muted);margin-top:16px;text-align:center; }
+
+    /* APP */
+    #app { display:none;width:100%; }
+
+    /* SIDEBAR */
+    .sidebar { width:var(--sidebar-w);min-height:100vh;background:var(--white);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:100;transition:transform .25s ease; }
+    .sidebar.hidden { transform:translateX(-100%); }
+    .sb-logo { padding:20px 18px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px; }
+    .sb-icon { width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0; }
+    .sb-mark { font-family:var(--font-head);font-size:18px;font-weight:700;color:var(--accent);letter-spacing:-.3px; }
+    .sb-sub  { font-size:10px;color:var(--muted);letter-spacing:.3px; }
+    .sb-nav  { padding:12px 8px;flex:1;overflow-y:auto; }
+    .nav-sec { font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:1.4px;color:var(--border2);padding:10px 10px 4px;margin-top:4px; }
+    .nav-item { display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:7px;cursor:pointer;font-size:13px;font-weight:400;color:var(--muted);transition:all .13s;user-select:none; }
+    .nav-item:hover { background:var(--light);color:var(--text); }
+    .nav-item.active { background:var(--accent-bg);color:var(--accent);font-weight:600; }
+    .nav-icon { font-size:14px;width:18px;text-align:center;flex-shrink:0; }
+    .nav-badge { margin-left:auto;background:var(--red-bg);color:var(--red);font-size:9.5px;font-weight:700;padding:1px 7px;border-radius:10px; }
+    .nav-plat { display:flex;align-items:center;gap:8px;padding:6px 10px 6px 30px;border-radius:7px;cursor:pointer;font-size:12.5px;color:var(--muted);transition:all .13s; }
+    .nav-plat:hover { background:var(--light);color:var(--text); }
+    .nav-plat.active { color:var(--accent);font-weight:600; }
+    .plat-dot { width:7px;height:7px;border-radius:50%;flex-shrink:0; }
+    .sb-foot { padding:12px 14px;border-top:1px solid var(--border);display:flex;align-items:center;gap:9px;cursor:pointer;transition:background .13s; }
+    .sb-foot:hover { background:var(--light); }
+    .avatar { width:32px;height:32px;border-radius:50%;background:var(--accent-bg);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--accent);flex-shrink:0; }
+    .sf-name { font-size:12.5px;font-weight:600;color:var(--text); }
+    .sf-email { font-size:10.5px;color:var(--muted); }
+
+    /* MAIN */
+    .main { margin-left:var(--sidebar-w);flex:1;min-height:100vh;transition:margin-left .25s ease; }
+
+    /* TOPBAR */
+    .topbar { background:var(--white);border-bottom:1px solid var(--border);padding:0 26px;height:54px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:50; }
+    .hamburger { display:flex;flex-direction:column;gap:4px;cursor:pointer;padding:6px;border-radius:6px;transition:background .13s;flex-shrink:0; }
+    .hamburger:hover { background:var(--light); }
+    .hamburger span { display:block;width:18px;height:2px;background:var(--muted);border-radius:2px;transition:all .2s; }
+    .tb-sep   { width:1px;height:18px;background:var(--border); }
+    .tb-title { font-family:var(--font-head);font-size:15.5px;font-weight:600;color:var(--text);flex:1; }
+    .tb-right { display:flex;align-items:center;gap:9px; }
+    .plat-sel { display:flex;align-items:center;gap:7px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:5px 11px;font-size:12px;font-family:var(--font-body);color:var(--text);cursor:pointer; }
+    .plat-sel select { background:transparent;border:none;font-size:12px;font-family:var(--font-body);color:var(--text);outline:none;cursor:pointer; }
+
+    /* PAGES */
+    .page { display:none;padding:26px 30px;animation:fadeUp .2s ease; }
+    .page.active { display:block; }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)} }
+    .sec-title { font-family:var(--font-head);font-size:23px;font-weight:700;color:var(--text);margin-bottom:3px; }
+    .sec-sub   { font-size:13px;color:var(--muted);margin-bottom:24px; }
+
+    /* STAT ROW */
+    .stat-row { display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:22px; }
+    .stat-card { background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:17px 19px;box-shadow:var(--shadow); }
+    .si   { font-size:19px;margin-bottom:9px; }
+    .slbl { font-size:10.5px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px; }
+    .sval { font-family:var(--font-head);font-size:25px;font-weight:700;color:var(--text);line-height:1; }
+    .sdelta { font-size:11px;margin-top:5px; }
+    .up { color:var(--accent2); } .down { color:var(--red); } .neu { color:var(--muted); }
+
+    /* CHARTS */
+    .charts-row { display:grid;grid-template-columns:1.1fr .9fr;gap:14px;margin-bottom:22px; }
+    .chart-card { background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:19px 21px;box-shadow:var(--shadow); }
+    .cc-title { font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px; }
+    .cc-sub   { font-size:11px;color:var(--muted);margin-bottom:14px; }
+    .chart-wrap { position:relative;height:205px; }
+
+    /* TAGS */
+    .tag { display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600; }
+    .tag-def { background:var(--red-bg);color:var(--red); }
+    .tag-wro { background:var(--amber-bg);color:var(--amber); }
+    .tag-nad { background:var(--blue-bg);color:var(--blue); }
+    .tag-chm { background:var(--purple-bg);color:var(--purple); }
+    .tag-siz { background:var(--accent-bg);color:var(--accent); }
+
+    /* TABLE */
+    .tbl-card { background:var(--white);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden; }
+    .tbl-hdr  { display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-bottom:1px solid var(--border); }
+    .tbl-hdr-t { font-size:13px;font-weight:600; }
+    table { width:100%;border-collapse:collapse; }
+    th { text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);padding:8px 19px;background:var(--bg2);border-bottom:1px solid var(--border); }
+    td { padding:10px 19px;font-size:13px;border-bottom:1px solid var(--border);color:var(--text); }
+    tr:last-child td { border-bottom:none; }
+    tr:hover td { background:var(--bg); }
+    .pname { font-weight:500; }
+    .pdot  { display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px; }
+
+    /* CARD */
+    .card { background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:21px 23px;box-shadow:var(--shadow); }
+    .card-full { grid-column:1/-1; }
+    .card-lbl { font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.1px;color:var(--muted);margin-bottom:13px; }
+
+    /* FORM */
+    .field { margin-bottom:13px; }
+    .flabel { display:block;font-size:11.5px;font-weight:500;color:var(--muted);margin-bottom:5px; }
+    input[type=text],input[type=number],input[type=password],input[type=email],select,textarea {
+      width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);
+      font-family:var(--font-body);font-size:13.5px;padding:9px 12px;outline:none;transition:border-color .15s;
+    }
+    input:focus,select:focus,textarea:focus { border-color:var(--accent);background:var(--white); }
+    textarea { resize:vertical;min-height:90px;line-height:1.6; }
+    input[type=range] { width:100%;padding:0;border:none;background:transparent;-webkit-appearance:none;cursor:pointer;margin-top:4px; }
+    input[type=range]::-webkit-slider-runnable-track { height:4px;background:var(--border);border-radius:2px; }
+    input[type=range]::-webkit-slider-thumb { -webkit-appearance:none;width:15px;height:15px;border-radius:50%;background:var(--accent);margin-top:-5.5px; }
+    .range-row { display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);margin-top:3px; }
+    .rval { color:var(--accent);font-weight:700;font-size:13px; }
+
+    .btn { padding:10px 19px;border-radius:8px;font-family:var(--font-body);font-size:13.5px;font-weight:600;cursor:pointer;border:none;transition:all .15s; }
+    .btn-primary { background:var(--accent);color:white; }
+    .btn-primary:hover { background:#2f5540; }
+    .btn-primary:disabled { opacity:.5;cursor:not-allowed; }
+    .btn-full { width:100%;padding:12px; }
+    .btn-ghost { background:transparent;color:var(--muted);border:1px solid var(--border); }
+    .btn-ghost:hover { background:var(--light);color:var(--text); }
+
+    /* PREDICT LAYOUT */
+    .predict-grid { display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:15px; }
+
+    /* RESULT */
+    #result-panel { display:none;animation:fadeUp .3s ease; }
+    .result-hero { display:flex;align-items:center;gap:14px;background:var(--accent-bg);border:1px solid #B8D9C6;border-radius:10px;padding:15px 18px;margin-bottom:14px; }
+    .res-icon  { font-size:32px; }
+    .res-label { font-family:var(--font-head);font-size:19px;font-weight:700; }
+    .res-conf  { font-size:12px;color:var(--muted);margin-top:2px; }
+    .res-conf span { color:var(--accent);font-weight:700; }
+    .scores-row { display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:13px; }
+    .score-box  { background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:11px 13px;text-align:center; }
+    .score-lbl  { font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:4px; }
+    .score-val  { font-family:var(--font-head);font-size:17px;font-weight:700; }
+    .score-val.pos { color:var(--accent2); }
+    .score-val.neg { color:var(--red); }
+    .score-val.com { color:var(--blue); }
+    .advice-box { background:var(--light);border:1px solid var(--border);border-radius:8px;padding:11px 13px;font-size:12.5px;color:var(--muted);line-height:1.7;margin-bottom:13px; }
+    .advice-box strong { color:var(--text); }
+    .prob-lbl  { font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:9px; }
+    .prob-item { margin-bottom:8px; }
+    .prob-row  { display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px; }
+    .bar-track { height:5px;background:var(--light);border-radius:3px;overflow:hidden; }
+    .bar-fill  { height:100%;border-radius:3px;background:var(--border2);transition:width .55s ease; }
+    .bar-fill.winner { background:var(--accent2); }
+    .fallback-note { background:var(--amber-bg);border:1px solid #E8C87A;border-radius:8px;padding:9px 13px;font-size:11.5px;color:var(--amber);margin-top:12px;display:none; }
+
+    /* PROFILE */
+    .profile-layout { display:grid;grid-template-columns:276px 1fr;gap:17px; }
+    .prof-side  { display:flex;flex-direction:column;gap:14px; }
+    .prof-card  { background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow); }
+    .prof-av    { width:64px;height:64px;border-radius:50%;background:var(--accent-bg);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:var(--accent);margin-bottom:11px; }
+    .prof-name  { font-family:var(--font-head);font-size:18px;font-weight:700; }
+    .prof-email { font-size:12px;color:var(--muted);margin-top:2px; }
+    .prof-div   { border:none;border-top:1px solid var(--border);margin:12px 0; }
+    .prof-row   { display:flex;justify-content:space-between;align-items:center;margin-bottom:9px; }
+    .prof-key   { font-size:11.5px;color:var(--muted); }
+    .prof-val   { font-size:12px;font-weight:600;color:var(--text); }
+    .igrp       { margin-bottom:12px; }
+    .igrp label { font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px;font-weight:500; }
+    .save-msg   { display:none;margin-top:9px;font-size:12px;color:var(--accent); }
+
+    /* PRODUCTS */
+    .cat-tabs { display:flex;gap:7px;margin-bottom:18px;flex-wrap:wrap; }
+    .cat-tab  { padding:6px 14px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--white);color:var(--muted);transition:all .13s; }
+    .cat-tab.active,.cat-tab:hover { background:var(--accent);color:white;border-color:var(--accent); }
+    .prod-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:13px; }
+    .prod-card { background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:15px;box-shadow:var(--shadow); }
+    .prod-cat  { font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--accent);background:var(--accent-bg);padding:2px 7px;border-radius:4px;display:inline-block;margin-bottom:8px; }
+    .prod-name { font-size:13.5px;font-weight:600;margin-bottom:4px; }
+    .prod-meta { font-size:11px;color:var(--muted);margin-bottom:8px; }
+    .prod-bot  { display:flex;justify-content:space-between;align-items:center; }
+    .prod-price { font-family:var(--font-head);font-size:14px;font-weight:700; }
+    .prod-ret   { font-size:11px;color:var(--red);font-weight:500; }
+
+    /* PLATFORMS PAGE */
+    .plat-hdr  { display:flex;align-items:center;gap:13px;margin-bottom:22px; }
+    .plat-logo-big { width:50px;height:50px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;border:1px solid var(--border); }
+    .plat-title { font-family:var(--font-head);font-size:21px;font-weight:700; }
+    .plat-badge { padding:3px 11px;border-radius:20px;font-size:11px;font-weight:600; }
+    .conn  { background:var(--accent-bg);color:var(--accent); }
+    .disco { background:var(--red-bg);color:var(--red); }
+    .plat-list { display:flex;flex-direction:column;gap:11px;max-width:540px; }
+    .plat-item { display:flex;align-items:center;justify-content:space-between;background:var(--white);border:1px solid var(--border);border-radius:10px;padding:13px 17px;box-shadow:var(--shadow); }
+    .plat-left { display:flex;align-items:center;gap:11px; }
+    .plat-icon2 { width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px; }
+    .plat-pname { font-size:13px;font-weight:600; }
+    .plat-stat  { font-size:11px;color:var(--muted); }
+    .tog-btn    { padding:5px 13px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;border:none;transition:all .13s; }
+    .tog-conn   { background:var(--red-bg);color:var(--red); }
+    .tog-dis    { background:var(--accent-bg);color:var(--accent); }
+
+    /* FOOTER */
+    .pg-footer { margin-top:44px;padding:20px 30px;border-top:1px solid var(--border);background:var(--white);display:flex;justify-content:space-between;align-items:center;font-size:11.5px;color:var(--muted); }
+    .ft-links  { display:flex;gap:16px; }
+    .ft-links a { color:var(--muted);text-decoration:none;transition:color .13s; }
+    .ft-links a:hover { color:var(--accent); }
+
+    /* MODAL */
+    .modal-ov { display:none;position:fixed;inset:0;background:rgba(28,26,22,.4);z-index:300;align-items:center;justify-content:center; }
+    .modal-ov.open { display:flex; }
+    .modal-box { background:var(--white);border-radius:16px;padding:28px;width:450px;max-width:94vw;box-shadow:0 12px 48px rgba(0,0,0,.14);max-height:84vh;overflow-y:auto; }
+    .modal-title { font-family:var(--font-head);font-size:18px;font-weight:700;margin-bottom:16px; }
+    .modal-close { float:right;background:none;border:none;font-size:17px;cursor:pointer;color:var(--muted); }
+    .modal-body  { font-size:13px;color:var(--muted);line-height:1.85; }
+    .modal-body h4 { color:var(--text);font-size:13px;margin:13px 0 4px;font-weight:600; }
+
+    /* SPINNER */
+    .spinner { display:inline-block;width:12px;height:12px;border:2px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;margin-right:5px;vertical-align:middle; }
+    @keyframes spin { to{transform:rotate(360deg)} }
+
+    @media(max-width:900px){
+      .sidebar { transform:translateX(-100%); }
+      .sidebar.mobile-open { transform:translateX(0); }
+      .main { margin-left:0!important; }
+      .stat-row { grid-template-columns:1fr 1fr; }
+      .charts-row,.predict-grid,.profile-layout { grid-template-columns:1fr; }
+      .prod-grid { grid-template-columns:1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">VaapsiAI</div>
+    <div class="login-tag">Return Intelligence Platform</div>
+    <label class="login-lbl">Email</label>
+    <input class="login-inp" type="email" id="l-email" placeholder="seller@email.com" value="rahul@email.com"/>
+    <label class="login-lbl">Password</label>
+    <input class="login-inp" type="password" id="l-pass" placeholder="••••••••" value="password"/>
+    <button class="login-btn" onclick="doLogin()">Sign In</button>
+    <div class="login-err" id="login-err">Incorrect email or password.</div>
+    <div class="login-hint">Demo: rahul@email.com / password</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-logo">
+      <div class="sb-icon">🔁</div>
+      <div><div class="sb-mark">VaapsiAI</div><div class="sb-sub">Return Intelligence</div></div>
+    </div>
+    <nav class="sb-nav">
+      <div class="nav-sec">Main</div>
+      <div class="nav-item active" onclick="goTo('overview',this)"><span class="nav-icon">▦</span>Overview</div>
+      <div class="nav-item" onclick="goTo('predict',this)"><span class="nav-icon">🔍</span>Predict Return</div>
+      <div class="nav-item" onclick="goTo('log-review',this)"><span class="nav-icon">📝</span>Log Review<span class="nav-badge">New</span></div>
+      <div class="nav-sec">Catalogue</div>
+      <div class="nav-item" onclick="goTo('products',this)"><span class="nav-icon">📦</span>Products</div>
+      <div class="nav-item" onclick="goTo('returns',this)"><span class="nav-icon">↩</span>Returns Log</div>
+      <div class="nav-sec">Platforms</div>
+      <div class="nav-item" onclick="goTo('platforms',this)"><span class="nav-icon">🔗</span>All Platforms</div>
+      <div class="nav-plat" onclick="goTo('plat-amazon',this)"><span class="plat-dot" style="background:#FF9900"></span>Amazon</div>
+      <div class="nav-plat" onclick="goTo('plat-flipkart',this)"><span class="plat-dot" style="background:#2874F0"></span>Flipkart</div>
+      <div class="nav-plat" onclick="goTo('plat-meesho',this)"><span class="plat-dot" style="background:#FF3E6C"></span>Meesho</div>
+      <div class="nav-plat" onclick="goTo('plat-myntra',this)"><span class="plat-dot" style="background:#FF6B35"></span>Myntra</div>
+      <div class="nav-sec">Account</div>
+      <div class="nav-item" onclick="goTo('profile',this)"><span class="nav-icon">👤</span>Seller Profile</div>
+    </nav>
+    <div class="sb-foot" onclick="goTo('profile',null)">
+      <div class="avatar" id="sb-av">R</div>
+      <div><div class="sf-name" id="sb-name">Rahul Sharma</div><div class="sf-email" id="sb-email">rahul@email.com</div></div>
+    </div>
+  </aside>
+
+  <div class="main" id="main-area">
+    <div class="topbar">
+      <div class="hamburger" onclick="toggleSidebar()"><span></span><span></span><span></span></div>
+      <div class="tb-sep"></div>
+      <div class="tb-title" id="tb-title">Overview</div>
+      <div class="tb-right">
+        <div class="plat-sel"><span>🏪</span><select onchange="filterPlatform(this.value)"><option value="all">All Platforms</option><option value="amazon">Amazon</option><option value="flipkart">Flipkart</option><option value="meesho">Meesho</option><option value="myntra">Myntra</option></select></div>
+        <button class="btn btn-ghost" onclick="doLogout()" style="padding:6px 13px;font-size:12px;">Sign out</button>
+      </div>
+    </div>
+
+    <!-- OVERVIEW -->
+    <div class="page active" id="page-overview">
+      <div class="sec-title">Overview</div>
+      <div class="sec-sub">Returns summary across all linked platforms</div>
+      <div class="stat-row">
+        <div class="stat-card"><div class="si">📦</div><div class="slbl">Total Products</div><div class="sval">1,284</div><div class="sdelta neu">Across 4 platforms</div></div>
+        <div class="stat-card"><div class="si">↩</div><div class="slbl">Total Returns</div><div class="sval">312</div><div class="sdelta down">↑ 8% this month</div></div>
+        <div class="stat-card"><div class="si">💰</div><div class="slbl">Revenue (MTD)</div><div class="sval">₹4.2L</div><div class="sdelta up">↑ 12% vs last month</div></div>
+        <div class="stat-card"><div class="si">📉</div><div class="slbl">Return Rate</div><div class="sval">24.3%</div><div class="sdelta down">↑ 2.1% vs last month</div></div>
+      </div>
+      <div class="charts-row">
+        <div class="chart-card"><div class="cc-title">Returns by Reason</div><div class="cc-sub">Distribution across 5 return categories</div><div class="chart-wrap"><canvas id="pieChart"></canvas></div></div>
+        <div class="chart-card"><div class="cc-title">Returns by Platform</div><div class="cc-sub">Volume per linked platform</div><div class="chart-wrap"><canvas id="barChart"></canvas></div></div>
+      </div>
+      <div class="tbl-card">
+        <div class="tbl-hdr"><div class="tbl-hdr-t">Recent Returns</div></div>
+        <table><thead><tr><th>Product</th><th>Platform</th><th>Category</th><th>Return Reason</th><th>Price</th><th>Date</th></tr></thead>
+        <tbody id="recent-tbody"></tbody></table>
+      </div>
+    </div>
+
+    <!-- PREDICT -->
+    <div class="page" id="page-predict">
+      <div class="sec-title">Predict Return Reason</div>
+      <div class="sec-sub">Enter a customer review to classify the return reason using ML</div>
+      <div class="predict-grid">
+        <div class="card card-full">
+          <div class="card-lbl">Customer Review</div>
+          <div class="field"><label class="flabel">Review Text</label><textarea id="p-review" placeholder="e.g. The jacket arrived but the zipper was broken on arrival…"></textarea></div>
+        </div>
+        <div class="card">
+          <div class="card-lbl">Product Details</div>
+          <div class="field"><label class="flabel">Category</label><select id="p-cat"><option>Clothing &amp; Apparel</option><option>Electronics</option><option>Home &amp; Kitchen</option><option>Skincare &amp; Beauty</option></select></div>
+          <div class="field"><label class="flabel">Price (USD) — <span class="rval" id="p-pval">$50</span></label><input type="range" id="p-price" min="10" max="150" value="50" step="1" oninput="document.getElementById('p-pval').textContent='$'+this.value"/><div class="range-row"><span>$10</span><span>$150</span></div></div>
+          <div class="field"><label class="flabel">Order Qty — <span class="rval" id="p-qval">1</span></label><input type="range" id="p-qty" min="1" max="4" value="1" step="1" oninput="document.getElementById('p-qval').textContent=this.value"/><div class="range-row"><span>1</span><span>4</span></div></div>
+        </div>
+        <div class="card">
+          <div class="card-lbl">Rating</div>
+          <div class="field"><label class="flabel">Star Rating — <span class="rval" id="p-rval">3 ★</span></label><input type="range" id="p-rat" min="1" max="5" value="3" step="0.5" oninput="updateStars(this.value,'p-rval','p-stars')"/><div class="range-row"><span>1★ Poor</span><span>5★ Excellent</span></div></div>
+          <div id="p-stars" style="font-size:21px;letter-spacing:4px;color:#C47B0E;margin-top:6px;">★★★☆☆</div>
+          <div style="margin-top:12px;background:var(--bg2);border-radius:8px;padding:10px;font-size:11.5px;color:var(--muted);line-height:1.6;">Low ratings (1–2★) often signal defective items. High ratings with return keywords suggest preference change.</div>
+        </div>
+        <div class="card-full"><button class="btn btn-primary btn-full" id="pred-btn" onclick="runPredict()">Predict Return Reason</button></div>
+        <div class="card card-full" id="result-panel">
+          <div class="card-lbl">Prediction Result</div>
+          <div class="result-hero"><div class="res-icon" id="res-icon">🔧</div><div><div class="res-label" id="res-label">—</div><div class="res-conf">Confidence: <span id="res-conf">—</span></div></div></div>
+          <div class="scores-row">
+            <div class="score-box"><div class="score-lbl">Positive Sentiment</div><div class="score-val pos" id="sc-pos">—</div></div>
+            <div class="score-box"><div class="score-lbl">Negative Sentiment</div><div class="score-val neg" id="sc-neg">—</div></div>
+            <div class="score-box"><div class="score-lbl">Compound Score</div><div class="score-val com" id="sc-com">—</div></div>
+          </div>
+          <div class="advice-box"><strong>Recommendation: </strong><span id="res-advice">—</span></div>
+          <div class="prob-lbl">Class Probabilities</div>
+          <div id="prob-bars"></div>
+          <div class="fallback-note" id="fallback-note">⚠️ Demo mode — rf_model.pkl / tfidf.pkl not found. Ask Person 2 to export via joblib.dump().</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOG REVIEW -->
+    <div class="page" id="page-log-review">
+      <div class="sec-title">Log Review</div>
+      <div class="sec-sub">Enter order details and get an instant return reason prediction</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;">
+        <div class="card card-full">
+          <div class="card-lbl">Order Information</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px;">
+            <div class="field"><label class="flabel">Order ID</label><input type="text" id="lr-oid" placeholder="e.g. ORD-10291"/></div>
+            <div class="field"><label class="flabel">Platform</label><select id="lr-plat"><option>Amazon</option><option>Flipkart</option><option>Meesho</option><option>Myntra</option></select></div>
+            <div class="field"><label class="flabel">Product Name</label><input type="text" id="lr-prod" placeholder="e.g. Men's Slim Fit Jeans"/></div>
+            <div class="field"><label class="flabel">Category</label><select id="lr-cat"><option>Clothing &amp; Apparel</option><option>Electronics</option><option>Home &amp; Kitchen</option><option>Skincare &amp; Beauty</option></select></div>
+            <div class="field"><label class="flabel">Price (₹)</label><input type="number" id="lr-price" placeholder="e.g. 1299"/></div>
+            <div class="field"><label class="flabel">Order Quantity</label><input type="number" id="lr-qty" value="1" min="1"/></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-lbl">Customer Review</div>
+          <div class="field"><label class="flabel">Review Text</label><textarea id="lr-review" placeholder="Paste the customer's review here…"></textarea></div>
+          <div class="field"><label class="flabel">Star Rating — <span class="rval" id="lr-rval">3 ★</span></label><input type="range" id="lr-rat" min="1" max="5" value="3" step="0.5" oninput="updateStars(this.value,'lr-rval','lr-stars')"/><div class="range-row"><span>1★</span><span>5★</span></div></div>
+          <div id="lr-stars" style="font-size:19px;letter-spacing:3px;color:#C47B0E;margin-bottom:8px;">★★★☆☆</div>
+        </div>
+        <div class="card">
+          <div class="card-lbl">Return Details (Optional)</div>
+          <div class="field"><label class="flabel">Known Return Reason</label><select id="lr-reason"><option value="">— Not yet known —</option><option>Defective</option><option>Wrong Item</option><option>Not as Described</option><option>Changed Mind</option><option>Sizing Issue</option></select></div>
+          <div class="field"><label class="flabel">Return Date</label><input type="text" id="lr-date" placeholder="e.g. 15 Apr 2025"/></div>
+          <div class="field"><label class="flabel">Notes</label><textarea id="lr-notes" placeholder="Additional context…" style="min-height:60px;"></textarea></div>
+        </div>
+        <div class="card">
+          <div class="card-lbl">Actions</div>
+          <button class="btn btn-primary btn-full" style="margin-bottom:9px;" onclick="logAndPredict()">Log &amp; Predict Return Reason</button>
+          <button class="btn btn-ghost btn-full" onclick="clearLog()">Clear Form</button>
+          <div id="lr-saved" style="display:none;margin-top:11px;background:var(--accent-bg);border:1px solid #B8D9C6;border-radius:8px;padding:9px 13px;font-size:12px;color:var(--accent);">✓ Entry saved to Returns Log</div>
+        </div>
+        <div class="card card-full" id="lr-result" style="display:none;">
+          <div class="card-lbl">Predicted Return Reason</div>
+          <div class="result-hero" style="background:var(--bg2);border-color:var(--border);"><div class="res-icon" id="lr-icon">🔧</div><div><div class="res-label" id="lr-label">—</div><div class="res-conf">Confidence: <span id="lr-conf">—</span></div></div></div>
+          <div class="scores-row">
+            <div class="score-box"><div class="score-lbl">Positive</div><div class="score-val pos" id="lr-pos">—</div></div>
+            <div class="score-box"><div class="score-lbl">Negative</div><div class="score-val neg" id="lr-neg">—</div></div>
+            <div class="score-box"><div class="score-lbl">Compound</div><div class="score-val com" id="lr-com">—</div></div>
+          </div>
+          <div class="advice-box"><strong>Recommendation: </strong><span id="lr-advice">—</span></div>
+          <div class="prob-lbl">Class Probabilities</div>
+          <div id="lr-bars"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRODUCTS -->
+    <div class="page" id="page-products">
+      <div class="sec-title">Products</div>
+      <div class="sec-sub">All products across platforms, grouped by category</div>
+      <div class="cat-tabs">
+        <div class="cat-tab active" onclick="filterCat('All',this)">All</div>
+        <div class="cat-tab" onclick="filterCat('Clothing & Apparel',this)">Clothing & Apparel</div>
+        <div class="cat-tab" onclick="filterCat('Electronics',this)">Electronics</div>
+        <div class="cat-tab" onclick="filterCat('Home & Kitchen',this)">Home & Kitchen</div>
+        <div class="cat-tab" onclick="filterCat('Skincare & Beauty',this)">Skincare & Beauty</div>
+      </div>
+      <div class="prod-grid" id="prod-grid"></div>
+    </div>
+
+    <!-- RETURNS LOG -->
+    <div class="page" id="page-returns">
+      <div class="sec-title">Returns Log</div>
+      <div class="sec-sub">Full history of returns across all platforms</div>
+      <div class="tbl-card">
+        <div class="tbl-hdr"><div class="tbl-hdr-t">All Returns</div></div>
+        <table><thead><tr><th>Order ID</th><th>Product</th><th>Platform</th><th>Return Reason</th><th>Rating</th><th>Price</th><th>Status</th></tr></thead>
+        <tbody id="returns-tbody"></tbody></table>
+      </div>
+    </div>
+
+    <!-- ALL PLATFORMS -->
+    <div class="page" id="page-platforms">
+      <div class="sec-title">Linked Platforms</div>
+      <div class="sec-sub">Connect seller accounts to pull return data automatically</div>
+      <div class="plat-list" id="plat-list-el"></div>
+    </div>
+
+    <!-- PLATFORM: AMAZON -->
+    <div class="page" id="page-plat-amazon">
+      <div class="plat-hdr"><div class="plat-logo-big" style="background:#FFF3E0;">🛒</div><div><div class="plat-title">Amazon</div><span class="plat-badge conn">● Connected</span></div></div>
+      <div class="stat-row">
+        <div class="stat-card"><div class="si">📦</div><div class="slbl">Products</div><div class="sval">412</div><div class="sdelta neu">Listed</div></div>
+        <div class="stat-card"><div class="si">↩</div><div class="slbl">Returns</div><div class="sval">112</div><div class="sdelta down">This month</div></div>
+        <div class="stat-card"><div class="si">💰</div><div class="slbl">Revenue</div><div class="sval">₹1.8L</div><div class="sdelta up">↑ 9%</div></div>
+        <div class="stat-card"><div class="si">⭐</div><div class="slbl">Avg Rating</div><div class="sval">3.8</div><div class="sdelta neu">/ 5</div></div>
+      </div>
+      <div class="charts-row">
+        <div class="chart-card"><div class="cc-title">Returns by Reason</div><div class="cc-sub">Amazon only</div><div class="chart-wrap"><canvas id="amz-pie"></canvas></div></div>
+        <div class="chart-card"><div class="cc-title">Monthly Trend</div><div class="cc-sub">Last 6 months</div><div class="chart-wrap"><canvas id="amz-line"></canvas></div></div>
+      </div>
+      <div class="tbl-card"><div class="tbl-hdr"><div class="tbl-hdr-t">Recent Returns — Amazon</div></div>
+      <table><thead><tr><th>Order ID</th><th>Product</th><th>Return Reason</th><th>Rating</th><th>Price</th><th>Date</th></tr></thead><tbody id="amz-tbody"></tbody></table></div>
+    </div>
+
+    <!-- PLATFORM: FLIPKART -->
+    <div class="page" id="page-plat-flipkart">
+      <div class="plat-hdr"><div class="plat-logo-big" style="background:#E8F5E9;">🛍️</div><div><div class="plat-title">Flipkart</div><span class="plat-badge conn">● Connected</span></div></div>
+      <div class="stat-row">
+        <div class="stat-card"><div class="si">📦</div><div class="slbl">Products</div><div class="sval">318</div><div class="sdelta neu">Listed</div></div>
+        <div class="stat-card"><div class="si">↩</div><div class="slbl">Returns</div><div class="sval">89</div><div class="sdelta down">This month</div></div>
+        <div class="stat-card"><div class="si">💰</div><div class="slbl">Revenue</div><div class="sval">₹1.4L</div><div class="sdelta up">↑ 14%</div></div>
+        <div class="stat-card"><div class="si">⭐</div><div class="slbl">Avg Rating</div><div class="sval">3.6</div><div class="sdelta neu">/ 5</div></div>
+      </div>
+      <div class="charts-row">
+        <div class="chart-card"><div class="cc-title">Returns by Reason</div><div class="cc-sub">Flipkart only</div><div class="chart-wrap"><canvas id="fk-pie"></canvas></div></div>
+        <div class="chart-card"><div class="cc-title">Monthly Trend</div><div class="cc-sub">Last 6 months</div><div class="chart-wrap"><canvas id="fk-line"></canvas></div></div>
+      </div>
+      <div class="tbl-card"><div class="tbl-hdr"><div class="tbl-hdr-t">Recent Returns — Flipkart</div></div>
+      <table><thead><tr><th>Order ID</th><th>Product</th><th>Return Reason</th><th>Rating</th><th>Price</th><th>Date</th></tr></thead><tbody id="fk-tbody"></tbody></table></div>
+    </div>
+
+    <!-- PLATFORM: MEESHO -->
+    <div class="page" id="page-plat-meesho">
+      <div class="plat-hdr"><div class="plat-logo-big" style="background:#FCE4EC;">🛒</div><div><div class="plat-title">Meesho</div><span class="plat-badge disco">○ Not Connected</span></div></div>
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:38px;text-align:center;box-shadow:var(--shadow);">
+        <div style="font-size:34px;margin-bottom:11px;">🔗</div>
+        <div style="font-family:var(--font-head);font-size:17px;font-weight:700;margin-bottom:7px;">Connect Meesho</div>
+        <div style="font-size:12.5px;color:var(--muted);margin-bottom:18px;max-width:320px;margin-left:auto;margin-right:auto;">Link your Meesho seller account to view return data, predictions, and analytics here.</div>
+        <button class="btn btn-primary" onclick="goTo('platforms',null)">Connect via Platforms</button>
+      </div>
+    </div>
+
+    <!-- PLATFORM: MYNTRA -->
+    <div class="page" id="page-plat-myntra">
+      <div class="plat-hdr"><div class="plat-logo-big" style="background:#E3F2FD;">👗</div><div><div class="plat-title">Myntra</div><span class="plat-badge disco">○ Not Connected</span></div></div>
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:38px;text-align:center;box-shadow:var(--shadow);">
+        <div style="font-size:34px;margin-bottom:11px;">🔗</div>
+        <div style="font-family:var(--font-head);font-size:17px;font-weight:700;margin-bottom:7px;">Connect Myntra</div>
+        <div style="font-size:12.5px;color:var(--muted);margin-bottom:18px;max-width:320px;margin-left:auto;margin-right:auto;">Link your Myntra seller account to view return data, predictions, and analytics here.</div>
+        <button class="btn btn-primary" onclick="goTo('platforms',null)">Connect via Platforms</button>
+      </div>
+    </div>
+
+    <!-- PROFILE -->
+    <div class="page" id="page-profile">
+      <div class="sec-title">Seller Profile</div>
+      <div class="sec-sub">Your account information and business details</div>
+      <div class="profile-layout">
+        <div class="prof-side">
+          <div class="prof-card">
+            <div class="prof-av" id="prof-av">R</div>
+            <div class="prof-name" id="prof-name-d">Rahul Sharma</div>
+            <div class="prof-email" id="prof-email-d">rahul@email.com</div>
+            <hr class="prof-div"/>
+            <div class="prof-row"><span class="prof-key">Phone</span><span class="prof-val" id="prof-phone-d">+91 98765 43210</span></div>
+            <div class="prof-row"><span class="prof-key">Business</span><span class="prof-val">Sharma Retail Co.</span></div>
+            <div class="prof-row"><span class="prof-key">Member since</span><span class="prof-val">Jan 2023</span></div>
+            <div class="prof-row"><span class="prof-key">Total Returns</span><span class="prof-val" style="color:var(--red)">312</span></div>
+            <div class="prof-row"><span class="prof-key">Total Profit</span><span class="prof-val" style="color:var(--accent)">₹12.4L</span></div>
+            <div class="prof-row"><span class="prof-key">Linked Platforms</span><span class="prof-val">2 / 5</span></div>
+          </div>
+          <div class="prof-card">
+            <div style="font-size:12px;font-weight:600;margin-bottom:11px;">Return Breakdown</div>
+            <div class="chart-wrap" style="height:145px;"><canvas id="prof-donut"></canvas></div>
+          </div>
+          <div class="prof-card">
+            <div style="font-size:12px;font-weight:600;margin-bottom:11px;">Account Details</div>
+            <div class="prof-row"><span class="prof-key">GST</span><span class="prof-val" style="font-size:10.5px;">07AABCS1429B1Z1</span></div>
+            <div class="prof-row"><span class="prof-key">Bank</span><span class="prof-val">•••• 4821</span></div>
+            <div class="prof-row"><span class="prof-key">UPI</span><span class="prof-val">rahul@upi</span></div>
+          </div>
+        </div>
+        <div class="prof-card">
+          <div style="font-size:14px;font-weight:600;margin-bottom:16px;">Edit Profile</div>
+          <div class="igrp"><label>Full Name</label><input type="text" id="e-name" value="Rahul Sharma"/></div>
+          <div class="igrp"><label>Email</label><input type="text" id="e-email" value="rahul@email.com"/></div>
+          <div class="igrp"><label>Phone</label><input type="text" id="e-phone" value="+91 98765 43210"/></div>
+          <div class="igrp"><label>Business Name</label><input type="text" id="e-biz" value="Sharma Retail Co."/></div>
+          <div class="igrp"><label>GST Number</label><input type="text" id="e-gst" value="07AABCS1429B1Z1"/></div>
+          <div class="igrp"><label>Bank (last 4 digits)</label><input type="text" id="e-bank" value="4821"/></div>
+          <div class="igrp"><label>UPI ID</label><input type="text" id="e-upi" value="rahul@upi"/></div>
+          <div style="display:flex;gap:9px;margin-top:4px;">
+            <button class="btn btn-primary" onclick="saveProfile()">Save Changes</button>
+            <button class="btn btn-ghost" onclick="doLogout()">Sign Out</button>
+          </div>
+          <div class="save-msg" id="save-msg">✓ Profile updated successfully</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pg-footer">
+      <div>© 2025 VaapsiAI. All rights reserved.</div>
+      <div class="ft-links">
+        <a href="#" onclick="openModal('privacy');return false;">Privacy Policy</a>
+        <a href="#" onclick="openModal('terms');return false;">Terms &amp; Conditions</a>
+        <a href="#" onclick="openModal('support');return false;">Support</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-ov" id="modal-ov" onclick="closeModal(event)">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-title" id="modal-title"></div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+// ── LOGIN ──────────────────────────────
+function doLogin() {
+  const e = document.getElementById('l-email').value.trim();
+  const p = document.getElementById('l-pass').value;
+  if (e === 'rahul@email.com' && p === 'password') {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    initCharts();
+  } else {
+    document.getElementById('login-err').style.display = 'block';
+  }
+}
+document.addEventListener('keydown', ev => {
+  if (ev.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') doLogin();
+});
+function doLogout() {
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-err').style.display = 'none';
+}
+
+// ── SIDEBAR TOGGLE ─────────────────────
+let sbOpen = true;
+function toggleSidebar() {
+  sbOpen = !sbOpen;
+  document.getElementById('sidebar').classList.toggle('hidden', !sbOpen);
+  document.getElementById('main-area').style.marginLeft = sbOpen ? 'var(--sidebar-w)' : '0';
+}
+
+// ── NAVIGATION ─────────────────────────
+const TITLES = { overview:'Overview', predict:'Predict Return Reason', 'log-review':'Log Review',
+  products:'Products', returns:'Returns Log', platforms:'All Platforms',
+  'plat-amazon':'Amazon', 'plat-flipkart':'Flipkart', 'plat-meesho':'Meesho', 'plat-myntra':'Myntra', profile:'Seller Profile' };
+function goTo(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item,.nav-plat').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if (el) el.classList.add('active');
+  document.getElementById('tb-title').textContent = TITLES[id] || id;
+  window.scrollTo(0,0);
+}
+
+// ── DATA ───────────────────────────────
+const PC = { Amazon:'#FF9900', Flipkart:'#2874F0', Meesho:'#FF3E6C', Myntra:'#FF6B35' };
+const RT = { 'Defective':'tag-def','Wrong Item':'tag-wro','Not as Described':'tag-nad','Changed Mind':'tag-chm','Sizing Issue':'tag-siz' };
+const LM = {0:'Defective',1:'Wrong Item',2:'Not as Described',3:'Changed Mind',4:'Sizing Issue'};
+const LI = {'Defective':'🔧','Wrong Item':'📦','Not as Described':'🏷️','Changed Mind':'💭','Sizing Issue':'📏'};
+const LA = {
+  'Defective':        'Likely a manufacturing or shipping issue. Prioritise QC checks.',
+  'Wrong Item':       'Fulfilment error detected. Review warehouse picking process.',
+  'Not as Described': 'Product listing may be misleading. Update images or description.',
+  'Changed Mind':     'Customer preference change — consider offering exchange options.',
+  'Sizing Issue':     'Size guide may need improvement. Add detailed measurements.'
+};
+
+const PRODS = [
+  {name:"Men's Slim Fit Jeans",  cat:'Clothing & Apparel',plat:'Flipkart',price:'₹1,299',ret:14},
+  {name:'Bluetooth Earbuds',     cat:'Electronics',       plat:'Amazon',  price:'₹2,499',ret:22},
+  {name:'Non-stick Cookware Set',cat:'Home & Kitchen',    plat:'Amazon',  price:'₹3,199',ret:8},
+  {name:'Face Serum SPF 50',     cat:'Skincare & Beauty', plat:'Myntra',  price:'₹899',  ret:5},
+  {name:'Floral Kurti (M)',       cat:'Clothing & Apparel',plat:'Meesho',  price:'₹649',  ret:31},
+  {name:'USB-C Laptop Charger',  cat:'Electronics',       plat:'Flipkart',price:'₹1,799',ret:10},
+  {name:'Bamboo Cutting Board',  cat:'Home & Kitchen',    plat:'Amazon',  price:'₹599',  ret:3},
+  {name:'Vitamin C Moisturiser', cat:'Skincare & Beauty', plat:'Myntra',  price:'₹749',  ret:7},
+  {name:"Running Shoes (UK 9)",  cat:'Clothing & Apparel',plat:'Amazon',  price:'₹2,199',ret:19},
+  {name:'Smart Watch Band',      cat:'Electronics',       plat:'Flipkart',price:'₹499',  ret:6},
+  {name:'Pressure Cooker 3L',    cat:'Home & Kitchen',    plat:'Meesho',  price:'₹1,099',ret:4},
+  {name:'Lip Care Kit',          cat:'Skincare & Beauty', plat:'Amazon',  price:'₹399',  ret:2},
+];
+const RECENT = [
+  {prod:"Men's Slim Fit Jeans", plat:'Flipkart',cat:'Clothing & Apparel',reason:'Sizing Issue',    price:'₹1,299',date:'14 Apr 2025',rat:2},
+  {prod:'Bluetooth Earbuds',    plat:'Amazon',  cat:'Electronics',       reason:'Defective',       price:'₹2,499',date:'13 Apr 2025',rat:1},
+  {prod:'Face Serum SPF 50',    plat:'Myntra',  cat:'Skincare & Beauty', reason:'Not as Described',price:'₹899',  date:'12 Apr 2025',rat:2},
+  {prod:'Floral Kurti (M)',      plat:'Meesho',  cat:'Clothing & Apparel',reason:'Wrong Item',     price:'₹649',  date:'12 Apr 2025',rat:2},
+  {prod:'USB-C Laptop Charger', plat:'Flipkart',cat:'Electronics',       reason:'Defective',       price:'₹1,799',date:'11 Apr 2025',rat:1},
+  {prod:"Running Shoes (UK 9)", plat:'Amazon',  cat:'Clothing & Apparel',reason:'Sizing Issue',    price:'₹2,199',date:'10 Apr 2025',rat:2},
+];
+const PLATS_D = [
+  {id:'amz', name:'Amazon',   icon:'🛒',bg:'#FFF3E0',conn:true, email:'seller@amazon.in'},
+  {id:'fk',  name:'Flipkart', icon:'🛍️',bg:'#E8F5E9',conn:true, email:'seller@flipkart.com'},
+  {id:'ms',  name:'Meesho',   icon:'🛒',bg:'#FCE4EC',conn:false,email:''},
+  {id:'myn', name:'Myntra',   icon:'👗',bg:'#E3F2FD',conn:false,email:''},
+  {id:'nyk', name:'Nykaa',    icon:'🏪',bg:'#F3E5F5',conn:false,email:''},
+];
+
+// ── RENDER ─────────────────────────────
+function renderTables() {
+  document.getElementById('recent-tbody').innerHTML = RECENT.map(r=>`
+    <tr><td class="pname">${r.prod}</td><td><span class="pdot" style="background:${PC[r.plat]||'#ccc'}"></span>${r.plat}</td>
+    <td>${r.cat}</td><td><span class="tag ${RT[r.reason]}">${r.reason}</span></td><td>${r.price}</td>
+    <td style="color:var(--muted)">${r.date}</td></tr>`).join('');
+
+  const full = [...RECENT,
+    {prod:'Non-stick Cookware',    plat:'Amazon',  reason:'Changed Mind',     price:'₹3,199',rat:4,date:'09 Apr 2025'},
+    {prod:'Vitamin C Moisturiser', plat:'Myntra',  reason:'Not as Described', price:'₹749',  rat:2,date:'08 Apr 2025'},
+    {prod:'Smart Watch Band',      plat:'Flipkart',reason:'Wrong Item',        price:'₹499',  rat:1,date:'07 Apr 2025'},
+  ];
+  document.getElementById('returns-tbody').innerHTML = full.map((r,i)=>`
+    <tr><td style="color:var(--muted);font-size:11px;">ORD-${10240+i}</td><td class="pname">${r.prod}</td>
+    <td><span class="pdot" style="background:${PC[r.plat]||'#ccc'}"></span>${r.plat}</td>
+    <td><span class="tag ${RT[r.reason]}">${r.reason}</span></td><td>${r.rat} ★</td><td>${r.price}</td>
+    <td><span class="tag" style="background:var(--amber-bg);color:var(--amber)">Processing</span></td></tr>`).join('');
+
+  const amzR = RECENT.filter(r=>r.plat==='Amazon');
+  document.getElementById('amz-tbody').innerHTML = amzR.map((r,i)=>`
+    <tr><td style="color:var(--muted);font-size:11px;">ORD-A${1001+i}</td><td class="pname">${r.prod}</td>
+    <td><span class="tag ${RT[r.reason]}">${r.reason}</span></td><td>${r.rat} ★</td><td>${r.price}</td>
+    <td style="color:var(--muted)">${r.date}</td></tr>`).join('');
+
+  const fkR = RECENT.filter(r=>r.plat==='Flipkart');
+  document.getElementById('fk-tbody').innerHTML = fkR.map((r,i)=>`
+    <tr><td style="color:var(--muted);font-size:11px;">ORD-F${2001+i}</td><td class="pname">${r.prod}</td>
+    <td><span class="tag ${RT[r.reason]}">${r.reason}</span></td><td>${r.rat} ★</td><td>${r.price}</td>
+    <td style="color:var(--muted)">${r.date}</td></tr>`).join('');
+}
+
+function renderProducts(cat) {
+  const items = cat==='All' ? PRODS : PRODS.filter(p=>p.cat===cat);
+  document.getElementById('prod-grid').innerHTML = items.map(p=>`
+    <div class="prod-card"><div class="prod-cat">${p.cat}</div><div class="prod-name">${p.name}</div>
+    <div class="prod-meta"><span class="pdot" style="background:${PC[p.plat]||'#ccc'}"></span>${p.plat}</div>
+    <div class="prod-bot"><span class="prod-price">${p.price}</span><span class="prod-ret">↩ ${p.ret} returns</span></div></div>`).join('');
+}
+
+function filterCat(cat,el) {
+  document.querySelectorAll('.cat-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  renderProducts(cat);
+}
+
+function renderPlatList() {
+  document.getElementById('plat-list-el').innerHTML = PLATS_D.map(p=>`
+    <div class="plat-item">
+      <div class="plat-left">
+        <div class="plat-icon2" style="background:${p.bg}">${p.icon}</div>
+        <div><div class="plat-pname">${p.name}</div><div class="plat-stat" id="pstat-${p.id}">${p.conn?'Connected · '+p.email:'Not connected'}</div></div>
+      </div>
+      <button class="tog-btn ${p.conn?'tog-conn':'tog-dis'}" id="pbtn-${p.id}" onclick="togglePlat('${p.id}',this)">${p.conn?'Disconnect':'Connect'}</button>
+    </div>`).join('');
+}
+
+function togglePlat(id,btn) {
+  const p = PLATS_D.find(x=>x.id===id);
+  p.conn = !p.conn;
+  document.getElementById('pstat-'+id).textContent = p.conn ? 'Connected · '+(p.email||'seller@account.com') : 'Not connected';
+  btn.textContent = p.conn ? 'Disconnect' : 'Connect';
+  btn.className = 'tog-btn ' + (p.conn ? 'tog-conn' : 'tog-dis');
+}
+
+function filterPlatform() {}
+
+// ── CHARTS ─────────────────────────────
+const PIE_C = ['#B83535','#C47B0E','#1E6A9E','#6040B8','#3D6B52'];
+const PIE_L = ['Defective','Wrong Item','Not as Described','Changed Mind','Sizing Issue'];
+const PIE_D = [68,52,74,49,69];
+const MONTHS = ['Nov','Dec','Jan','Feb','Mar','Apr'];
+
+function mkPie(id,data) {
+  return new Chart(document.getElementById(id),{
+    type:'doughnut',
+    data:{labels:PIE_L,datasets:[{data,backgroundColor:PIE_C,borderWidth:2,borderColor:'#FDFCF8'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:10,family:'DM Sans'},padding:9}}}}
+  });
+}
+function mkLine(id,data) {
+  return new Chart(document.getElementById(id),{
+    type:'line',
+    data:{labels:MONTHS,datasets:[{data,borderColor:'#3D6B52',backgroundColor:'rgba(61,107,82,0.08)',borderWidth:2,tension:.4,fill:true,pointBackgroundColor:'#3D6B52',pointRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{grid:{color:'#EAE6DC'},ticks:{font:{size:10.5}}},x:{grid:{display:false},ticks:{font:{size:10.5}}}}}
+  });
+}
+function initCharts() {
+  mkPie('pieChart',PIE_D);
+  new Chart(document.getElementById('barChart'),{
+    type:'bar',
+    data:{labels:['Amazon','Flipkart','Meesho','Myntra'],datasets:[{data:[112,89,64,47],backgroundColor:['#FF9900','#2874F0','#FF3E6C','#FF6B35'],borderRadius:5,borderSkipped:false}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{grid:{color:'#EAE6DC'},ticks:{font:{size:10.5}}},x:{grid:{display:false},ticks:{font:{size:10.5}}}}}
+  });
+  mkPie('prof-donut',PIE_D);
+  mkPie('amz-pie',[28,18,30,14,22]);
+  mkLine('amz-line',[18,22,28,20,32,30]);
+  mkPie('fk-pie',[20,15,24,18,12]);
+  mkLine('fk-line',[12,18,14,22,18,26]);
+}
+
+// ── STARS ──────────────────────────────
+function updateStars(v,valId,starsId) {
+  document.getElementById(valId).textContent = v+' ★';
+  const f=Math.floor(parseFloat(v)),h=parseFloat(v)%1>=.5?1:0,e=5-f-h;
+  document.getElementById(starsId).textContent='★'.repeat(f)+(h?'½':'')+('☆'.repeat(e));
+}
+
+// ── SENTIMENT ──────────────────────────
+const POS=new Set(['good','great','love','excellent','perfect','happy','satisfied','nice','best','wonderful','fantastic','amazing','quality','comfortable','recommend','pleased','awesome','superb']);
+const NEG=new Set(['bad','terrible','awful','worst','hate','poor','wrong','broken','defective','damaged','disappointed','useless','horrible','return','refund','never','waste','fake','small','large','tight','loose','defect','fault','misleading','incorrect']);
+
+function sentiment(text) {
+  const tokens = text.toLowerCase().replace(/[^a-z\s]/g,'').split(/\s+/).filter(t=>t.length>0);
+  const total  = tokens.length||1;
+  const pos    = tokens.filter(t=>POS.has(t)).length;
+  const neg    = tokens.filter(t=>NEG.has(t)).length;
+  return { pos:(pos/total).toFixed(3), neg:(neg/total).toFixed(3), com:((pos-neg)/(pos+neg+1)).toFixed(3) };
+}
+
+// ── FALLBACK PREDICTOR ─────────────────
+function fallback(text,rating) {
+  const t=text.toLowerCase();
+  if(['defect','damage','broken','fault','not working','stopped','malfunction'].some(w=>t.includes(w))) return 0;
+  if(['wrong','incorrect','mismatch','different','not what','mistaken'].some(w=>t.includes(w))) return 1;
+  if(['size','small','large','tight','loose','fit','short','long','big'].some(w=>t.includes(w))) return 4;
+  if(['color','description','picture','looks','mislead','fake','advertised'].some(w=>t.includes(w))) return 2;
+  if(rating>=4) return 3;
+  if(rating<=2) return 0;
+  return 3;
+}
+
+// ── RENDER RESULT ──────────────────────
+function renderResult(ids, data, sent) {
+  document.getElementById(ids.icon).textContent    = LI[data.prediction]||'❓';
+  document.getElementById(ids.label).textContent   = data.prediction;
+  document.getElementById(ids.conf).textContent    = data.confidence+'%';
+  document.getElementById(ids.advice).textContent  = LA[data.prediction]||'';
+  document.getElementById(ids.pos).textContent     = sent.pos;
+  document.getElementById(ids.neg).textContent     = sent.neg;
+  document.getElementById(ids.com).textContent     = sent.com;
+  const bars = document.getElementById(ids.bars);
+  bars.innerHTML='';
+  data.probabilities.sort((a,b)=>b.prob-a.prob).forEach(item=>{
+    bars.innerHTML+=`<div class="prob-item"><div class="prob-row"><span>${item.label}</span><span style="color:var(--accent);font-weight:600">${item.prob}%</span></div><div class="bar-track"><div class="bar-fill ${item.label===data.prediction?'winner':''}" style="width:${item.prob}%"></div></div></div>`;
+  });
+}
+
+function buildFallbackData(text,rating) {
+  const idx=fallback(text,rating);
+  const proba=Array(5).fill(0.05); proba[idx]=0.80;
+  return { prediction:LM[idx], confidence:80, probabilities:Object.values(LM).map((l,i)=>({label:l,prob:Math.round(proba[i]*1000)/10})), mode:'demo' };
+}
+
+// ── PREDICT PAGE ───────────────────────
+async function runPredict() {
+  const review = document.getElementById('p-review').value.trim();
+  if(!review){alert('Please enter a review.');return;}
+  const btn=document.getElementById('pred-btn');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span>Predicting…';
+  const sent=sentiment(review);
+  const rating=parseFloat(document.getElementById('p-rat').value);
+  const payload={review_text:review,rating,price_usd:parseFloat(document.getElementById('p-price').value),order_quantity:parseInt(document.getElementById('p-qty').value),product_category:document.getElementById('p-cat').value};
+  const IDS={icon:'res-icon',label:'res-label',conf:'res-conf',advice:'res-advice',bars:'prob-bars',pos:'sc-pos',neg:'sc-neg',com:'sc-com'};
+  try {
+    const res=await fetch('/predict',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const data=await res.json();
+    if(data.error){alert(data.error);return;}
+    renderResult(IDS,data,sent);
+    document.getElementById('fallback-note').style.display=data.mode==='demo'?'block':'none';
+  } catch {
+    renderResult(IDS,buildFallbackData(review,rating),sent);
+    document.getElementById('fallback-note').style.display='block';
+  } finally {
+    btn.disabled=false; btn.innerHTML='Predict Return Reason';
+    const p=document.getElementById('result-panel'); p.style.display='block';
+    p.scrollIntoView({behavior:'smooth',block:'nearest'});
+  }
+}
+
+// ── LOG REVIEW PAGE ────────────────────
+async function logAndPredict() {
+  const review=document.getElementById('lr-review').value.trim();
+  if(!review){alert('Please enter a review.');return;}
+  const sent=sentiment(review);
+  const rating=parseFloat(document.getElementById('lr-rat').value);
+  const payload={review_text:review,rating,price_usd:50,order_quantity:parseInt(document.getElementById('lr-qty').value)||1,product_category:document.getElementById('lr-cat').value};
+  const IDS={icon:'lr-icon',label:'lr-label',conf:'lr-conf',advice:'lr-advice',bars:'lr-bars',pos:'lr-pos',neg:'lr-neg',com:'lr-com'};
+  try {
+    const res=await fetch('/predict',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const data=await res.json();
+    if(data.error){alert(data.error);return;}
+    renderResult(IDS,data,sent);
+  } catch {
+    renderResult(IDS,buildFallbackData(review,rating),sent);
+  }
+  const p=document.getElementById('lr-result'); p.style.display='block';
+  p.scrollIntoView({behavior:'smooth',block:'nearest'});
+  const sv=document.getElementById('lr-saved'); sv.style.display='block';
+  setTimeout(()=>sv.style.display='none',3000);
+}
+
+function clearLog() {
+  ['lr-oid','lr-prod','lr-price','lr-notes','lr-review'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('lr-qty').value='1';
+  document.getElementById('lr-rat').value='3'; updateStars('3','lr-rval','lr-stars');
+  document.getElementById('lr-result').style.display='none';
+  document.getElementById('lr-saved').style.display='none';
+}
+
+// ── PROFILE ────────────────────────────
+function saveProfile() {
+  const name=document.getElementById('e-name').value;
+  const email=document.getElementById('e-email').value;
+  const phone=document.getElementById('e-phone').value;
+  const init=name.charAt(0).toUpperCase();
+  document.getElementById('prof-name-d').textContent=name;
+  document.getElementById('prof-email-d').textContent=email;
+  document.getElementById('prof-phone-d').textContent=phone;
+  document.getElementById('prof-av').textContent=init;
+  document.getElementById('sb-av').textContent=init;
+  document.getElementById('sb-name').textContent=name;
+  document.getElementById('sb-email').textContent=email;
+  const msg=document.getElementById('save-msg'); msg.style.display='block';
+  setTimeout(()=>msg.style.display='none',2500);
+}
+
+// ── MODALS ─────────────────────────────
+const MODS = {
+  privacy:{title:'Privacy Policy',body:`<h4>1. Data We Collect</h4>VaapsiAI collects seller account info, product listings, order data, and return records you provide or sync via connected platforms.<h4>2. How We Use Data</h4>Your data powers return reason predictions, dashboards, and model accuracy. We never sell your data.<h4>3. Data Storage</h4>All data is encrypted at rest and in transit (AES-256).<h4>4. Third-Party Platforms</h4>When you connect Amazon, Flipkart, or others, their own privacy policies apply.<h4>5. Your Rights</h4>You may request deletion of your account and all data at any time via support.<h4>6. Contact</h4>privacy@vaapsi.ai`},
+  terms:{title:'Terms & Conditions',body:`<h4>1. Acceptance</h4>By using VaapsiAI, you agree to these terms.<h4>2. Service</h4>VaapsiAI provides AI-powered return reason prediction and seller analytics. Predictions are probabilistic and should not be the sole basis for business decisions.<h4>3. Responsibilities</h4>You are responsible for the accuracy of product information and compliance with platform policies.<h4>4. Intellectual Property</h4>All VaapsiAI software, models, and UI are proprietary. You may not copy, reverse-engineer, or redistribute any part.<h4>5. Liability</h4>VaapsiAI is not liable for losses from prediction errors or decisions made from dashboard data.<h4>6. Governing Law</h4>These terms are governed by the laws of India.`},
+  support:{title:'Support',body:`<h4>Email</h4>support@vaapsi.ai<h4>Response Time</h4>Within 24 business hours.<h4>Common Issues</h4>• Model not loading — ensure rf_model.pkl and tfidf.pkl are in the same folder as app.py<br/>• Platform not connecting — re-authenticate via Platforms page<br/>• Prediction seems off — add more detail to the review text`}
+};
+function openModal(t) {
+  document.getElementById('modal-title').textContent=MODS[t].title;
+  document.getElementById('modal-body').innerHTML=MODS[t].body;
+  document.getElementById('modal-ov').classList.add('open');
+}
+function closeModal(e) {
+  if(!e||e.target===document.getElementById('modal-ov')) document.getElementById('modal-ov').classList.remove('open');
+}
+
+// ── INIT ───────────────────────────────
+renderTables();
+renderProducts('All');
+renderPlatList();
+</script>
+</body>
+</html>

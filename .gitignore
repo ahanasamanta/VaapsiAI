@@ -1,0 +1,18 @@
+# Large model files
+rf_model.pkl
+rf_model (1).pkl
+
+# Large data files
+train.csv
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Environment
+.env
+venv/
